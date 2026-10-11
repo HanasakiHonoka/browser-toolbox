@@ -864,7 +864,7 @@
     });
     elNum.addEventListener('change', function () { setMult(parseFloat(elNum.value)); });
     elSlider.addEventListener('input', function () { setMult(parseFloat(elSlider.value)); });
-    panel.querySelectorAll('.mtb-presets button').forEach(function (b) {
+    panel.querySelectorAll('.mtb-presets button[data-v]').forEach(function (b) {
         b.addEventListener('click', function () { setMult(parseFloat(b.dataset.v)); });
     });
     elFly.addEventListener('change', function () {
