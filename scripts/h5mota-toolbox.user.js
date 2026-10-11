@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         H5魔塔工具箱
 // @namespace    hsjje-h5mota-toolbox
-// @version      2.2.4
+// @version      2.2.5
 // @description  血瓶拾取/使用倍率 + 楼层传送器无视楼梯限制 + 扣血转加血(战斗) + 回春触发计算 + 楼层敌人统计 + 撤销悬浮按钮 + 楼传滚动条；配置按魔塔独立存储，新塔默认全关。适用于 HTML5魔塔引擎（土豆魔塔）游戏
 // @author       hsjje
 // @match        http://127.0.0.1/*
@@ -13,8 +13,8 @@
 // @grant        GM_setValue
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
-// @downloadURL  https://raw.githubusercontent.com/HanasakiHonoka/nyaa_script/main/scripts/h5mota-toolbox.user.js
-// @updateURL    https://raw.githubusercontent.com/HanasakiHonoka/nyaa_script/main/scripts/h5mota-toolbox.user.js
+// @downloadURL  https://raw.githubusercontent.com/HanasakiHonoka/browser-toolbox/main/scripts/h5mota-toolbox.user.js
+// @updateURL    https://raw.githubusercontent.com/HanasakiHonoka/browser-toolbox/main/scripts/h5mota-toolbox.user.js
 // ==/UserScript==
 
 (function () {

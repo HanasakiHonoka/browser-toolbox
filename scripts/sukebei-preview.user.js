@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Sukebei Preview
 // @namespace    https://sukebei.nyaa.si/
-// @version      1.2
+// @version      1.3
 // @description  鼠标悬停在 sukebei 种子链接上时显示封面预览（与 Batch Preview 共用封面缓存）
 // @match        *://sukebei.nyaa.si/*
 // @match        *://sukebei.nyaa.mom/*
@@ -11,8 +11,8 @@
 // @connect      sukebei.nyaa.mom
 // @connect      hentai-covers.site
 // @run-at       document-idle
-// @downloadURL  https://raw.githubusercontent.com/HanasakiHonoka/nyaa_script/main/scripts/sukebei-preview.user.js
-// @updateURL    https://raw.githubusercontent.com/HanasakiHonoka/nyaa_script/main/scripts/sukebei-preview.user.js
+// @downloadURL  https://raw.githubusercontent.com/HanasakiHonoka/browser-toolbox/main/scripts/sukebei-preview.user.js
+// @updateURL    https://raw.githubusercontent.com/HanasakiHonoka/browser-toolbox/main/scripts/sukebei-preview.user.js
 // ==/UserScript==
 
 (function () {

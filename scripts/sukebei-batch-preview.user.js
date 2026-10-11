@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Sukebei Batch Preview
 // @namespace    https://sukebei.nyaa.si/
-// @version      1.3
+// @version      1.4
 // @description  在 sukebei 列表页插入封面缩略图列与多选列，支持批量复制磁力链接、按需加载封面（与 Sukebei Preview 共用缓存）
 // @match        *://sukebei.nyaa.si/*
 // @match        *://sukebei.nyaa.mom/*
@@ -10,8 +10,8 @@
 // @grant        GM_setClipboard
 // @connect      hentai-covers.site
 // @run-at       document-idle
-// @downloadURL  https://raw.githubusercontent.com/HanasakiHonoka/nyaa_script/main/scripts/sukebei-batch-preview.user.js
-// @updateURL    https://raw.githubusercontent.com/HanasakiHonoka/nyaa_script/main/scripts/sukebei-batch-preview.user.js
+// @downloadURL  https://raw.githubusercontent.com/HanasakiHonoka/browser-toolbox/main/scripts/sukebei-batch-preview.user.js
+// @updateURL    https://raw.githubusercontent.com/HanasakiHonoka/browser-toolbox/main/scripts/sukebei-batch-preview.user.js
 // ==/UserScript==
 
 (function () {
