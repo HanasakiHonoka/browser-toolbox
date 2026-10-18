@@ -19,7 +19,7 @@ browser-toolbox/
 
 | 脚本 | 版本 | 作用 |
 | --- | --- | --- |
-| [H5 魔塔工具箱](scripts/h5mota-toolbox.user.js) | 2.2.5 | 血瓶拾取/使用倍率、楼层传送器无视楼梯限制、扣血转加血、回春触发计算、楼层敌人统计、撤销悬浮按钮、楼传滚动条。配置按魔塔独立存储，新塔默认全关。适配 HTML5 魔塔引擎（土豆魔塔） |
+| [H5 魔塔工具箱](scripts/h5mota-toolbox.user.js) | 2.2.6 | 血瓶拾取/使用倍率、钥匙数量调整、楼层传送器无视楼梯限制、扣血转加血、回春触发计算、楼层敌人统计、撤销悬浮按钮、楼传滚动条。配置按魔塔独立存储，新塔默认全关。适配 HTML5 魔塔引擎（土豆魔塔） |
 | [Sukebei Preview](scripts/sukebei-preview.user.js) | 1.3 | 鼠标悬停在 sukebei 种子链接上时显示封面预览，与 Batch Preview 共用封面缓存 |
 | [Sukebei Batch Preview](scripts/sukebei-batch-preview.user.js) | 1.4 | 列表页插入封面缩略图列与多选列，支持批量复制磁力链接、按需加载封面 |
 | [Sukebei Size Highlighter](scripts/sukebei-size-highlighter.user.js) | 1.3 | 按相对大小高亮 Size 列，数值越大颜色越醒目 |

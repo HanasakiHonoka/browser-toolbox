@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         H5魔塔工具箱
 // @namespace    hsjje-h5mota-toolbox
-// @version      2.2.5
-// @description  血瓶拾取/使用倍率 + 楼层传送器无视楼梯限制 + 扣血转加血(战斗) + 回春触发计算 + 楼层敌人统计 + 撤销悬浮按钮 + 楼传滚动条；配置按魔塔独立存储，新塔默认全关。适用于 HTML5魔塔引擎（土豆魔塔）游戏
+// @version      2.2.6
+// @description  血瓶拾取/使用倍率 + 钥匙数量调整 + 楼层传送器无视楼梯限制 + 扣血转加血(战斗) + 回春触发计算 + 楼层敌人统计 + 撤销悬浮按钮 + 楼传滚动条；配置按魔塔独立存储，新塔默认全关。适用于 HTML5魔塔引擎（土豆魔塔）游戏
 // @author       hsjje
 // @match        http://127.0.0.1/*
 // @match        http://localhost/*
@@ -762,6 +762,14 @@
 #${PANEL_ID} .mtb-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
 #${PANEL_ID} input[type=number] { width:52px; background:#14161c; color:#fff; border:1px solid #4a5060;
     border-radius:4px; padding:2px 4px; font:inherit; }
+#${PANEL_ID} .mtb-key-title { margin-bottom:4px; }
+#${PANEL_ID} .mtb-key-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 8px; margin-bottom:6px; }
+#${PANEL_ID} .mtb-key-grid label { display:flex; align-items:center; justify-content:space-between; gap:4px; }
+#${PANEL_ID} .mtb-key-grid input[type=number] { width:58px; box-sizing:border-box; }
+#${PANEL_ID} .mtb-key-apply { width:100%; background:#2a2f3a; color:#dfe3ea; border:1px solid #4a5060;
+    border-radius:4px; cursor:pointer; font:inherit; padding:2px 0; }
+#${PANEL_ID} .mtb-key-apply:hover { background:#3a4152; }
+#${PANEL_ID} .mtb-key-msg { color:#8a93a5; min-height:18px; }
 #${PANEL_ID} input[type=range] { flex:1; accent-color:#ff6a6a; }
 #${PANEL_ID} .mtb-presets { display:flex; gap:4px; margin-bottom:6px; }
 #${PANEL_ID} .mtb-presets button { flex:1; background:#2a2f3a; color:#dfe3ea; border:1px solid #4a5060;
@@ -815,6 +823,16 @@
             </div>
             <div class="mtb-gain">本次实际加血: <b class="mtb-gainv">-</b></div>
             <div class="mtb-sep"></div>
+            <div class="mtb-key-title">钥匙数量</div>
+            <div class="mtb-key-grid">
+                <label>黄 <input type="number" class="mtb-key-num" data-key="yellowKey" min="0" max="999999999" step="1"></label>
+                <label>蓝 <input type="number" class="mtb-key-num" data-key="blueKey" min="0" max="999999999" step="1"></label>
+                <label>红 <input type="number" class="mtb-key-num" data-key="redKey" min="0" max="999999999" step="1"></label>
+                <label>绿 <input type="number" class="mtb-key-num" data-key="greenKey" min="0" max="999999999" step="1"></label>
+            </div>
+            <button class="mtb-key-apply">应用钥匙数量</button>
+            <div class="mtb-key-msg"></div>
+            <div class="mtb-sep"></div>
             <label class="mtb-ck"><input type="checkbox" class="mtb-fly-free"> 楼传无视楼梯限制</label>
             <label class="mtb-ck"><input type="checkbox" class="mtb-flip-on" title="战斗造成的伤害翻转为等量加血"> 扣血转加血</label>
             <div class="mtb-sep"></div>
@@ -838,6 +856,11 @@
     const elFly = panel.querySelector('.mtb-fly-free');
     const elFlip = panel.querySelector('.mtb-flip-on');
     const elCs = panel.querySelector('.mtb-cs-on');
+    const elKeyInputs = Array.from(panel.querySelectorAll('.mtb-key-num'));
+    const elKeyMsg = panel.querySelector('.mtb-key-msg');
+    elKeyInputs.forEach(function (input) {
+        input.addEventListener('input', function () { elKeyMsg.textContent = ''; });
+    });
     elCsList = panel.querySelector('.mtb-cs-list');
     elFlr = panel.querySelector('.mtb-flr');
 
@@ -884,6 +907,45 @@
         csCache.key = null; // 开关切换后强制重算
         render();
     });
+    function readKeyCounts() {
+        const hero = W.core && W.core.status && W.core.status.hero;
+        const keys = hero && hero.items && hero.items.keys;
+        if (!keys) return false;
+        elKeyInputs.forEach(function (input) {
+            if (document.activeElement !== input)
+                input.value = Math.max(0, Math.floor(Number(keys[input.dataset.key]) || 0));
+        });
+        return true;
+    }
+    panel.querySelector('.mtb-key-apply').addEventListener('click', function () {
+        const core = W.core;
+        const hero = core && core.status && core.status.hero;
+        if (!hero || !hero.items) {
+            elKeyMsg.textContent = '游戏尚未开始';
+            return;
+        }
+        const values = {};
+        for (let i = 0; i < elKeyInputs.length; i++) {
+            const input = elKeyInputs[i];
+            const raw = input.value.trim();
+            const value = Number(raw);
+            if (raw === '' || !Number.isSafeInteger(value) || value < 0 || value > 999999999) {
+                elKeyMsg.textContent = '请输入 0–999999999 的整数';
+                input.focus();
+                return;
+            }
+            values[input.dataset.key] = value;
+        }
+        if (!hero.items.keys) hero.items.keys = {};
+        Object.keys(values).forEach(function (key) { hero.items.keys[key] = values[key]; });
+        try { if (typeof core.updateStatusBar === 'function') core.updateStatusBar(); } catch (e) { /* ignore */ }
+        readKeyCounts();
+        elKeyMsg.textContent = '已更新';
+    });
+    // 道具栏变化时同步显示当前钥匙数；用户正在编辑时不覆盖输入内容。
+    setInterval(function () {
+        readKeyCounts();
+    }, 1000);
     panel.querySelector('.mtb-sel-a').addEventListener('click', function () {
         if (W.core && W.core.status) {
             selState.a = W.core.status.floorId;
