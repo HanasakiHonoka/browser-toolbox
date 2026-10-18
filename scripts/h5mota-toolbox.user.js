@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         H5魔塔工具箱
 // @namespace    hsjje-h5mota-toolbox
-// @version      2.2.7
+// @version      2.2.10
 // @description  血瓶拾取/使用倍率 + 钥匙数量调整 + 楼层传送器无视楼梯限制 + 扣血转加血(战斗) + 回春触发计算 + 楼层敌人统计 + 撤销悬浮按钮 + 楼传滚动条；配置按魔塔独立存储，新塔默认全关。适用于 HTML5魔塔引擎（土豆魔塔）游戏
 // @author       hsjje
 // @match        http://127.0.0.1/*
@@ -746,7 +746,26 @@
 
     // ---------- 面板 ----------
     const PANEL_ID = 'mota-toolbox-panel';
-    if (document.getElementById(PANEL_ID)) return;
+    function cleanDuplicateKeyRows(root) {
+        const seen = {};
+        root.querySelectorAll('.mtb-key-num').forEach(function (input) {
+            const key = input.dataset.key;
+            if (!key) return;
+            if (seen[key]) {
+                const row = input.closest('label');
+                if (row) row.remove();
+            } else seen[key] = true;
+        });
+        root.querySelectorAll('.mtb-key-grid').forEach(function (grid) {
+            if (!grid.querySelector('.mtb-key-num')) grid.remove();
+        });
+    }
+    const existingPanels = document.querySelectorAll('#' + PANEL_ID);
+    if (existingPanels.length) {
+        cleanDuplicateKeyRows(existingPanels[0]);
+        for (let i = 1; i < existingPanels.length; i++) existingPanels[i].remove();
+        return;
+    }
 
     const css = `
 #${PANEL_ID} { position:fixed; z-index:2147483000; font:12px/1.6 Consolas,Menlo,monospace;
@@ -825,14 +844,14 @@
             </div>
             <div class="mtb-gain">本次实际加血: <b class="mtb-gainv">-</b></div>
             <div class="mtb-sep"></div>
-            <div class="mtb-key-title">钥匙数量 <span class="mtb-key-hint">显示当前库存；输入增减量（可为负数）</span></div>
+            <div class="mtb-key-title">钥匙数量 <span class="mtb-key-hint">显示当前库存；输入要设置的数量</span></div>
             <div class="mtb-key-grid">
-                <label><span>黄 <b class="mtb-key-count" data-count="yellowKey">—</b></span><input type="number" class="mtb-key-num" data-key="yellowKey" min="-999999999" max="999999999" step="1" value="0"></label>
-                <label><span>蓝 <b class="mtb-key-count" data-count="blueKey">—</b></span><input type="number" class="mtb-key-num" data-key="blueKey" min="-999999999" max="999999999" step="1" value="0"></label>
-                <label><span>红 <b class="mtb-key-count" data-count="redKey">—</b></span><input type="number" class="mtb-key-num" data-key="redKey" min="-999999999" max="999999999" step="1" value="0"></label>
-                <label><span>绿 <b class="mtb-key-count" data-count="greenKey">—</b></span><input type="number" class="mtb-key-num" data-key="greenKey" min="-999999999" max="999999999" step="1" value="0"></label>
+                <label><span>黄 <b class="mtb-key-count" data-count="yellowKey">—</b></span><input type="number" class="mtb-key-num" data-key="yellowKey" min="0" max="999999999" step="1" value="0"></label>
+                <label><span>蓝 <b class="mtb-key-count" data-count="blueKey">—</b></span><input type="number" class="mtb-key-num" data-key="blueKey" min="0" max="999999999" step="1" value="0"></label>
+                <label><span>红 <b class="mtb-key-count" data-count="redKey">—</b></span><input type="number" class="mtb-key-num" data-key="redKey" min="0" max="999999999" step="1" value="0"></label>
+                <label><span>绿 <b class="mtb-key-count" data-count="greenKey">—</b></span><input type="number" class="mtb-key-num" data-key="greenKey" min="0" max="999999999" step="1" value="0"></label>
             </div>
-            <button class="mtb-key-apply">调整钥匙数量</button>
+            <button class="mtb-key-apply">设置钥匙数量</button>
             <div class="mtb-key-msg"></div>
             <div class="mtb-sep"></div>
             <label class="mtb-ck"><input type="checkbox" class="mtb-fly-free"> 楼传无视楼梯限制</label>
@@ -860,8 +879,12 @@
     const elCs = panel.querySelector('.mtb-cs-on');
     const elKeyInputs = Array.from(panel.querySelectorAll('.mtb-key-num'));
     const elKeyMsg = panel.querySelector('.mtb-key-msg');
+    const keyInputDirty = {};
     elKeyInputs.forEach(function (input) {
-        input.addEventListener('input', function () { elKeyMsg.textContent = ''; });
+        input.addEventListener('input', function () {
+            keyInputDirty[input.dataset.key] = true;
+            elKeyMsg.textContent = '';
+        });
     });
     elCsList = panel.querySelector('.mtb-cs-list');
     elFlr = panel.querySelector('.mtb-flr');
@@ -909,17 +932,28 @@
         csCache.key = null; // 开关切换后强制重算
         render();
     });
+    function getKeyCount(core, key) {
+        try {
+            if (typeof core.itemCount === 'function') {
+                const count = Number(core.itemCount(key));
+                if (isFinite(count)) return Math.max(0, Math.floor(count));
+            }
+        } catch (e) { /* 回退读取勇士数据 */ }
+        const keys = core.status && core.status.hero && core.status.hero.items && core.status.hero.items.keys;
+        return Math.max(0, Math.floor(Number(keys && keys[key]) || 0));
+    }
     function readKeyCounts() {
-        const hero = W.core && W.core.status && W.core.status.hero;
-        const keys = hero && hero.items && hero.items.keys;
-        if (!hero || !hero.items) {
+        const core = W.core;
+        const hero = core && core.status && core.status.hero;
+        if (!core || !hero || !hero.items) {
             panel.querySelectorAll('.mtb-key-count').forEach(function (el) { el.textContent = '—'; });
             return false;
         }
         elKeyInputs.forEach(function (input) {
-            const count = keys ? Math.max(0, Math.floor(Number(keys[input.dataset.key]) || 0)) : 0;
+            const count = getKeyCount(core, input.dataset.key);
             const display = panel.querySelector('.mtb-key-count[data-count="' + input.dataset.key + '"]');
             if (display) display.textContent = String(count);
+            if (!keyInputDirty[input.dataset.key]) input.value = String(count);
         });
         return true;
     }
@@ -930,33 +964,36 @@
             elKeyMsg.textContent = '游戏尚未开始';
             return;
         }
-        const changes = {};
+        const values = {};
         for (let i = 0; i < elKeyInputs.length; i++) {
             const input = elKeyInputs[i];
             const raw = input.value.trim();
             const value = Number(raw);
-            if (raw === '' || !Number.isSafeInteger(value) || value < -999999999 || value > 999999999) {
-                elKeyMsg.textContent = '请输入 -999999999–999999999 的整数';
+            if (raw === '' || !Number.isSafeInteger(value) || value < 0 || value > 999999999) {
+                elKeyMsg.textContent = '请输入 0–999999999 的整数';
                 input.focus();
                 return;
             }
-            const current = Math.max(0, Math.floor(Number(hero.items.keys && hero.items.keys[input.dataset.key]) || 0));
-            if (current + value < 0) {
-                elKeyMsg.textContent = '调整后数量不能小于 0';
-                input.focus();
-                return;
-            }
-            changes[input.dataset.key] = { after: current + value, delta: value };
+            values[input.dataset.key] = value;
         }
-        if (!hero.items.keys) hero.items.keys = {};
-        Object.keys(changes).forEach(function (key) { hero.items.keys[key] = changes[key].after; });
+        Object.keys(values).forEach(function (key) {
+            try {
+                if (typeof core.setItem === 'function') core.setItem(key, values[key]);
+                else {
+                    if (!hero.items.keys) hero.items.keys = {};
+                    hero.items.keys[key] = values[key];
+                }
+            } catch (e) {
+                if (!hero.items.keys) hero.items.keys = {};
+                hero.items.keys[key] = values[key];
+            }
+        });
         try { if (typeof core.updateStatusBar === 'function') core.updateStatusBar(); } catch (e) { /* ignore */ }
+        elKeyInputs.forEach(function (input) { keyInputDirty[input.dataset.key] = false; });
         readKeyCounts();
-        elKeyInputs.forEach(function (input) { input.value = '0'; });
-        const changed = Object.keys(changes).filter(function (key) { return changes[key].delta !== 0; });
-        elKeyMsg.textContent = changed.length ? '已调整 ' + changed.length + ' 种钥匙' : '数量未变化';
+        elKeyMsg.textContent = '已设置钥匙数量';
     });
-    // 道具栏变化时实时同步当前库存，不覆盖用户填写的增减量。
+    // 道具栏变化时实时同步当前库存；用户编辑过的输入框暂不覆盖。
     setInterval(function () {
         readKeyCounts();
     }, 250);
